@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const MyHomePage(title: 'Flutter Demo Home Page'),
+        '/': (context) => const MyHomePage(title: 'Flutter Demo'),
         '/home': (context) => const HomePage(),
       },
     );
@@ -43,13 +43,12 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isLoginInProgress = false;
 
   //email controller
-  final TextEditingController _emailController = TextEditingController(
-    text: 'superadmin@gmail.com',
-  );
+  final TextEditingController _emailController =
+      TextEditingController(text: "superadmin@gmail.com");
   //password controller
-  final TextEditingController _passwordController = TextEditingController(
-    text: 'password',
-  );
+  final TextEditingController _passwordController =
+      TextEditingController(text: "password");
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -88,32 +87,44 @@ class _MyHomePageState extends State<MyHomePage> {
                     isLoginInProgress = true;
                   });
                   //request login
+                  print(_emailController.text);
+                  print(_passwordController.text);
+                  Map<String, String> headers = {"Accept": "application/json"};
                   final response = await http.post(
                     Uri.parse('http://10.0.2.2:8000/api/auth/login'),
+                    headers: headers,
                     body: {
                       'email': _emailController.text,
                       'password': _passwordController.text,
                       'device_name': 'android',
                     },
                   );
-                  final jsonResponse = json.decode(response.body);
-                  final token = Token.fromJson(jsonResponse);
-                  final prefs = await SharedPreferences.getInstance();
-                  // print("Token From Api ${token.token}");
-                  if (token.token != null) {
-                    await prefs.setString('token', token.token!);
+                  if (response.statusCode == 200) {
+                    final jsonResponse = json.decode(response.body);
+                    final token = Token.fromJson(jsonResponse);
+                    final prefs = await SharedPreferences.getInstance();
+                    print("Token From Api ${token.token}");
+                    if (token.token != null) {
+                      await prefs.setString('token', token.token!);
+                      setState(() {
+                        isLoginInProgress = false;
+                        isLoggedIn = true;
+                      });
+
+                      if (!mounted) {
+                        return;
+                      }
+
+                      if (isLoggedIn) {
+                        Navigator.pushReplacementNamed(context, '/home');
+                      }
+                    }
+                  } else {
+                    print("Masuk");
                     setState(() {
                       isLoginInProgress = false;
-                      isLoggedIn = true;
+                      isLoggedIn = false;
                     });
-
-                    if (!mounted) {
-                      return;
-                    }
-
-                    if (isLoggedIn) {
-                      Navigator.pushReplacementNamed(context, '/home');
-                    }
                   }
                 },
                 child: const Text("Login"),
@@ -135,8 +146,8 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             Visibility(
-              child: CircularProgressIndicator(),
               visible: isLoginInProgress,
+              child: const CircularProgressIndicator(),
             ),
           ],
         ),
