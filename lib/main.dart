@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:login_http/models/loginError.dart';
 import 'package:login_http/models/token.dart';
 import 'package:login_http/pages/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -87,8 +88,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     isLoginInProgress = true;
                   });
                   //request login
-                  print(_emailController.text);
-                  print(_passwordController.text);
                   Map<String, String> headers = {"Accept": "application/json"};
                   final response = await http.post(
                     Uri.parse('http://10.0.2.2:8000/api/auth/login'),
@@ -120,7 +119,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       }
                     }
                   } else {
-                    print("Masuk");
+                    final jsonResponse = json.decode(response.body);
+                    final loginError = LoginError.fromJson(jsonResponse);
+                    // print(loginError.message);
+                    // print(loginError.errors?.email?.elementAt(0));
                     setState(() {
                       isLoginInProgress = false;
                       isLoggedIn = false;
